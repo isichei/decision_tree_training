@@ -49,159 +49,121 @@ def entropy(x) :
 
 def manual_tree_classifier(data, nodes, outcome_i = None, thres = 0.5, gini_measure = True) :
     
-    if gini_measure :
-        measure_function = gini
-        m_text = '<br/>gini = '
-    else :
-      measure_function = entropy
-      m_text = '<br/>entropy = '
-        
-    if outcome_i is None :
-        outcome_i = data.shape[1]-1
+	if gini_measure :
+		measure_function = gini
+		m_text = '<br/>gini = '
+	else :
+		measure_function = entropy
+		m_text = '<br/>entropy = '
 
-    node_data = []
+	if outcome_i is None :
+		outcome_i = data.shape[1]-1
 
-    n_nodes = len(nodes)*2 + 1
+		node_data = []
 
-    # Define length of data_splits based on nodes array
-    for i in range(n_nodes) :
-        node_data.append([])
+		n_nodes = len(nodes)*2 + 1
 
-    all_nodes = list(range(1,n_nodes))
-    nd = []
-    for i in range(len(nodes)) :
-        nd.append(all_nodes[:2])
-        all_nodes = all_nodes[2:]
+	# Define length of data_splits based on nodes array
+	for i in range(n_nodes) :
+		node_data.append([])
 
-    node_data[0] = data
-    for i in range(len(nodes)) :
-        node_data[nd[i][0]], node_data[nd[i][1]] = split(nodes[i], node_data[i])
+	all_nodes = list(range(1,n_nodes))
+	nd = []
+	for i in range(len(nodes)) :
+		nd.append(all_nodes[:2])
+		all_nodes = all_nodes[2:]
 
-    m = []
-    p = []
-    s = []
-    
-    for i in range(n_nodes) :
-        m.append(measure_function(list(map(lambda x: x[outcome_i], node_data[i]))))
-        prop = np.sum(list(map(lambda x: x[outcome_i], node_data[i])))
-        s.append(len(node_data[i]))
-        p.append(prop / s[-1] if (prop != 0 and s[-1] != 0) else 0)
+	node_data[0] = data
+	for i in range(len(nodes)) :
+		node_data[nd[i][0]], node_data[nd[i][1]] = split(nodes[i], node_data[i])
 
-    p = np.around(p, 2)
-    m = np.around(m, 2)
+	m = []
+	p = []
+	s = []
+
+	for i in range(n_nodes) :
+		m.append(measure_function(list(map(lambda x: x[outcome_i], node_data[i]))))
+		prop = np.sum(list(map(lambda x: x[outcome_i], node_data[i])))
+		s.append(len(node_data[i]))
+		p.append(prop / s[-1] if (prop != 0 and s[-1] != 0) else 0)
+
+	p = np.around(p, 2)
+	m = np.around(m, 2)
 
 
-    dot_string = 'digraph Tree { node [shape=box, style="filled, rounded", color="black", fontname=helvetica] ; edge [fontname=helvetica] ;'
+	dot_string = 'digraph Tree { node [shape=box, style="filled, rounded", color="black", fontname=helvetica] ; edge [fontname=helvetica] ;'
 
-    for n in range(n_nodes) :
-        colour = '>, fillcolor="#4bc330"] ;' if p[n] >= 0.5 else '>, fillcolor="#e34464"] ;'
-        s1 = str(n) + '[label=<node_' + str(n) + m_text + str(m[n]) + '<br/>samples = ' + str(s[n]) + '<br/> percentage class = ' + str(p[n]) + colour 
-        dot_string = dot_string + s1
+	for n in range(n_nodes) :
+		colour = '>, fillcolor="#4bc330"] ;' if p[n] >= 0.5 else '>, fillcolor="#e34464"] ;'
+		s1 = str(n) + '[label=<node_' + str(n) + m_text + str(m[n]) + '<br/>samples = ' + str(s[n]) + '<br/> percentage class = ' + str(p[n]) + colour 
+		dot_string = dot_string + s1
 
-    for i in range(len(nd)) :
-        dot_string = dot_string + str(i) + ' -> ' + str(nd[i][0]) + '[labeldistance=2.5, labelangle=45, headlabel="True"];'
-        dot_string = dot_string + str(i) + ' -> ' + str(nd[i][1]) + '[labeldistance=2.5, labelangle=-45, headlabel="False"];'
+	for i in range(len(nd)) :
+		dot_string = dot_string + str(i) + ' -> ' + str(nd[i][0]) + '[labeldistance=2.5, labelangle=45, headlabel="True"];'
+		dot_string = dot_string + str(i) + ' -> ' + str(nd[i][1]) + '[labeldistance=2.5, labelangle=-45, headlabel="False"];'
 
-    dot_string = dot_string + "}"
+	dot_string = dot_string + "}"
 
-    graph = pydotplus.graph_from_dot_data(dot_string)
-    
-    return node_data, graph.create_png()
+	graph = pydotplus.graph_from_dot_data(dot_string)
 
-# # Using those arrays, we can parse the tree structure:
-# def print_tree(estimator, feature_names = None) :
-#     n_nodes = estimator.tree_.node_count
-#     children_left = estimator.tree_.children_left
-#     children_right = estimator.tree_.children_right
-#     feature = estimator.tree_.feature
-#     threshold = estimator.tree_.threshold
-    
+	return node_data, graph.create_png()
 
-#     features_out = []
-#     for f in feature :
-#         if feature_names is None :
-#             features_out.append("X[:," + str(f) + "]")
-#         else :
-#             features_out.append(feature_names[f])
 
-#     # The tree structure can be traversed to compute various properties such
-#     # as the depth of each node and whether or not it is a leaf.
-#     node_depth = np.zeros(shape=n_nodes, dtype=np.int64)
-#     is_leaves = np.zeros(shape=n_nodes, dtype=bool)
-#     stack = [(0, -1)]  # seed is the root node id and its parent depth
-#     while len(stack) > 0:
-#         node_id, parent_depth = stack.pop()
-#         node_depth[node_id] = parent_depth + 1
 
-#         # If we have a test node
-#         if (children_left[node_id] != children_right[node_id]):
-#             stack.append((children_left[node_id], parent_depth + 1))
-#             stack.append((children_right[node_id], parent_depth + 1))
-#         else:
-#             is_leaves[node_id] = True
+def manual_tree_regressor(data, nodes, outcome_i = None) :
 
-#     print("The binary tree structure has %s nodes and has "
-#           "the following tree structure:"
-#           % n_nodes)
-#     for i in range(n_nodes):
-#         if is_leaves[i]:
-#             print("%snode=%s leaf node." % (node_depth[i] * "\t", i))
-#         else:
-#             print("%snode=%s test node: go to node %s if %s <= %ss else to "
-#                   "node %s."
-#                   % (node_depth[i] * "\t",
-#                      i,
-#                      children_left[i],
-#                      features_out[i],
-#                      threshold[i],
-#                      children_right[i],
-#                      ))
-#     print()
+	colours = ['"#F8F8FF"','"#CCCCFF"','"#C4C3D0"','"#92A1CF"','"#8C92AC"','"#0000FF"','"#2A52BE"','"#002FA7"','"#003399"','"#00009C"','"#120A8F"','"#00008B"','"#000080"','"#191970"','"#082567"','"#002366"']
+	m_text = '<br/>mean = '
+	m_text2 = '<br/>var = '
 
-# def print_tree_decision_single(estimator, X_test, sample_id, feature_names = None) :
-#     # First let's retrieve the decision path of each sample. The decision_path
-#     # method allows to retrieve the node indicator functions. A non zero element of
-#     # indicator matrix at the position (i, j) indicates that the sample i goes
-#     # through the node j.
+	if outcome_i is None :
+		outcome_i = data.shape[1]-1
 
-#     node_indicator = estimator.decision_path(X_test)
+	node_data = []
 
-#     # Similarly, we can also have the leaves ids reached by each sample.
+	n_nodes = len(nodes)*2 + 1
 
-#     leave_id = estimator.apply(X_test)
+	# Define length of data_splits based on nodes array
+	for i in range(n_nodes) :
+		node_data.append([])
 
-#     # Now, it's possible to get the tests that were used to predict a sample or
-#     # a group of samples. First, let's make it for the sample.
+	all_nodes = list(range(1,n_nodes))
+	nd = []
+	for i in range(len(nodes)) :
+		nd.append(all_nodes[:2])
+		all_nodes = all_nodes[2:]
 
-#     node_index = node_indicator.indices[node_indicator.indptr[sample_id]:
-#                                         node_indicator.indptr[sample_id + 1]]
+	node_data[0] = data
+	for i in range(len(nodes)) :
+		node_data[nd[i][0]], node_data[nd[i][1]] = split(nodes[i], node_data[i])
 
-#     print('Rules used to predict sample %s: ' % sample_id)
-#     for node_id in node_index:
-#         if leave_id[sample_id] != node_id:
-#             continue
+	m = []
+	m2 = []
+	p = []
+	s = []
 
-#         if (X_test[sample_id, feature[node_id]] <= threshold[node_id]):
-#             threshold_sign = "<="
-#         else:
-#             threshold_sign = ">"
+	for i in range(n_nodes) :
+		m.append(np.mean(list(map(lambda x: x[outcome_i], node_data[i]))))
+		m2.append(np.var(list(map(lambda x: x[outcome_i], node_data[i]))))
+		s.append(len(node_data[i]))
 
-#         print("decision id node %s : (X[%s, %s] (= %s) %s %s)"
-#               % (node_id,
-#                  sample_id,
-#                  feature[node_id],
-#                  X_test[i, feature[node_id]],
-#                  threshold_sign,
-#                  threshold[node_id]))
+	m = np.around(m, 2)
+	m2 = np.around(m2, 2)
+	c_i = np.around(m, 0)
 
-# def print_tree_decisions_group(estimator, X_test, sample_ids) :
-#     # For a group of samples, we have the following common node.
-#     sample_ids = [0, 1]
-#     common_nodes = (node_indicator.toarray()[sample_ids].sum(axis=0) ==
-#                     len(sample_ids))
+	dot_string = 'digraph Tree { node [shape=box, style="filled, rounded", color="black", fontname=helvetica] ; edge [fontname=helvetica] ;'
+	colour_text = '>, fillcolor='
 
-#     common_node_id = np.arange(n_nodes)[common_nodes]
+	for n in range(n_nodes) :
+		s1 = str(n) + '[label=<node_' + str(n) + m_text + str(m[n]) + m_text2 + str(m2[n]) + '<br/>samples = ' + str(s[n]) + colour_text + colours[int(np.around(m[n],0))] + '] ;'
+		dot_string = dot_string + s1
 
-#     print("\nThe following samples %s share the node %s in the tree"
-#           % (sample_ids, common_node_id))
-#     print("It is %s %% of all nodes." % (100 * len(common_node_id) / n_nodes,))
+	for i in range(len(nd)) :
+		dot_string = dot_string + str(i) + ' -> ' + str(nd[i][0]) + '[labeldistance=2.5, labelangle=45, headlabel="True"];'
+		dot_string = dot_string + str(i) + ' -> ' + str(nd[i][1]) + '[labeldistance=2.5, labelangle=-45, headlabel="False"];'
+
+	dot_string = dot_string + "}"
+
+	graph = pydotplus.graph_from_dot_data(dot_string)
+
+	return node_data, graph.create_png()
