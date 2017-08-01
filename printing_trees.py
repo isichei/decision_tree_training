@@ -59,9 +59,9 @@ def manual_tree_classifier(data, nodes, outcome_i = None, thres = 0.5, gini_meas
 	if outcome_i is None :
 		outcome_i = data.shape[1]-1
 
-		node_data = []
+	node_data = []
 
-		n_nodes = len(nodes)*2 + 1
+	n_nodes = len(nodes)*2 + 1
 
 	# Define length of data_splits based on nodes array
 	for i in range(n_nodes) :
